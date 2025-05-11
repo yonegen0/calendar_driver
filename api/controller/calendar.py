@@ -21,7 +21,52 @@ def get_user():
                 external.db.session.add(user)
                 external.db.session.commit()
         
+        plans = external.db.session.query(Plan)\
+        .filter(Plan.user_id == user.id)
+        plans_json = {}
+        # 取得した予定を辞書に格納
+        for plan in plans:
+            # 各予定の情報を辞書に追加
+            plans_json[plan.id] = {
+                'start_date': plan.start_date,
+                'plan_text': plan.plan_text
+            }
+        
+        print(plans_json)
+        
         # ユーザーオブジェクトを JSON に変換して返す
-        return jsonify(user.to_dict()), 200
+        return jsonify(plans_json), 200
     except Exception as e:
-        return jsonify({"error": "Failed to fetch user data", "details": str(e)}), 500
+        return "", 500
+
+@app.route('/setplan', methods=["POST"])
+def setplan():
+    if request.is_json:
+        try:
+            data = request.get_json()
+            print("受信したデータ:", data)
+
+            data = request.get_json() # dataは辞書
+            for item in data: # リストの各要素（辞書）を処理
+                date = item['date']
+                text = item['text']
+            # データベースから最初のユーザーを取得
+            user = external.db.session.query(User).first()
+            
+            # 新しい Plan オブジェクトを作成
+            plan = Plan(
+                user_id = user.id,
+                start_date = date ,
+                plan_text = text,
+            )
+            # ユーザーの plans リストに新しい予定を追加
+            user.plans.append(plan)
+            # データベースに変更をコミット
+            external.db.session.commit()
+
+            return "", 200
+        except Exception as e:
+            print("JSON データの処理中にエラーが発生しました:", e)
+            return "", 400
+    else:
+        return "", 400

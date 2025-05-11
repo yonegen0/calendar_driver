@@ -27,6 +27,6 @@ class Plan(db.Model):
     # ユーザーID
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     # 開始日付
-    start_date = db.Column(db.Integer, nullable=False)
+    start_date = db.Column(db.String(30), nullable=False)
     # 予定のテキスト
     plan_text = db.Column(db.String(255), nullable=False)
