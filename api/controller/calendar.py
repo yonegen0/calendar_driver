@@ -43,9 +43,6 @@ def get_user():
 def setplan():
     if request.is_json:
         try:
-            data = request.get_json()
-            print("受信したデータ:", data)
-
             data = request.get_json() # dataは辞書
             for item in data: # リストの各要素（辞書）を処理
                 date = item['date']
@@ -65,6 +62,32 @@ def setplan():
             external.db.session.commit()
 
             return "", 200
+        except Exception as e:
+            print("JSON データの処理中にエラーが発生しました:", e)
+            return "", 400
+    else:
+        return "", 400
+
+@app.route('/getplan', methods=["POST"])
+def getplan():
+    if request.is_json:
+        try:
+            data = request.get_json() # dataは辞書
+            # 'id' を取得し、整数に変換
+            for item in data:
+                id_value = item.get('id')
+            if id_value is not None:
+                id = int(id_value)  
+            # 予定取得
+            plan = external.db.session.query(Plan)\
+            .filter(Plan.id == id).first()
+            # 予定をjsonに変換
+            plan_json = {
+                'start_date': plan.start_date,
+                'plan_text': plan.plan_text
+            }
+
+            return jsonify(plan_json), 200
         except Exception as e:
             print("JSON データの処理中にエラーが発生しました:", e)
             return "", 400
