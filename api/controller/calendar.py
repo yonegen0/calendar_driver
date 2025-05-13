@@ -71,7 +71,7 @@ def setplan():
     else:
         return "", 400
 
-# 特定の予定取得API
+# 選択した予定取得API
 @app.route('/getplan', methods=["POST"])
 def getplan():
     if request.is_json:
@@ -92,6 +92,35 @@ def getplan():
             }
 
             return jsonify(plan_json), 200
+        except Exception as e:
+            print("JSON データの処理中にエラーが発生しました:", e)
+            return "", 400
+    else:
+        return "", 400
+
+# 予定修正API
+@app.route('/editplan', methods=["POST"])
+def editplan():
+    if request.is_json:
+        try:
+            data = request.get_json() # dataは辞書
+            # 'id' を取得し、整数に変換
+            for item in data:
+                id_value = item.get('id')
+                date = item['date']
+                text = item['text']
+            if date == '' or text == '':
+                return "値が入っていません", 400
+            if id_value is not None:
+                id = int(id_value)  
+            # 予定修正
+            plan = external.db.session.query(Plan)\
+            .filter(Plan.id == id).first()
+            plan.start_date = date
+            plan.plan_text = text
+            external.db.session.commit()
+            
+            return "", 200
         except Exception as e:
             print("JSON データの処理中にエラーが発生しました:", e)
             return "", 400
