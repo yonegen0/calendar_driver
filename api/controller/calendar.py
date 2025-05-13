@@ -1,12 +1,12 @@
 # controllers/calendar_controller.py
 from flask import Blueprint, request, current_app, jsonify
-from sqlalchemy import and_
 
 import api.external as external
 from api.models.calendar import User, Plan
 
 app = Blueprint('calendar_api', __name__)
 
+# ユーザー情報取得API
 @app.route('/get_user', methods=["GET"])
 def get_user():
     try:
@@ -39,6 +39,7 @@ def get_user():
     except Exception as e:
         return "", 500
 
+# 予定追加API
 @app.route('/setplan', methods=["POST"])
 def setplan():
     if request.is_json:
@@ -47,6 +48,8 @@ def setplan():
             for item in data: # リストの各要素（辞書）を処理
                 date = item['date']
                 text = item['text']
+            if date == '' or text == '':
+                return "値が入っていません", 400
             # データベースから最初のユーザーを取得
             user = external.db.session.query(User).first()
             
@@ -68,6 +71,7 @@ def setplan():
     else:
         return "", 400
 
+# 特定の予定取得API
 @app.route('/getplan', methods=["POST"])
 def getplan():
     if request.is_json:
@@ -88,6 +92,28 @@ def getplan():
             }
 
             return jsonify(plan_json), 200
+        except Exception as e:
+            print("JSON データの処理中にエラーが発生しました:", e)
+            return "", 400
+    else:
+        return "", 400
+    
+# 予定削除API
+@app.route('/deleteplan', methods=["POST"])
+def deleteplan():
+    if request.is_json:
+        try:
+            data = request.get_json() # dataは辞書
+            # 'id' を取得し、整数に変換
+            for item in data:
+                id_value = item.get('id')
+            if id_value is not None:
+                id = int(id_value)  
+            # 予定削除
+            external.db.session.query(Plan).filter(Plan.id == id).delete()
+            external.db.session.commit()
+
+            return "", 200
         except Exception as e:
             print("JSON データの処理中にエラーが発生しました:", e)
             return "", 400
